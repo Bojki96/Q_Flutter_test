@@ -1,10 +1,15 @@
 import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:q_flutter_test/screens/postsview.dart';
+import 'package:q_flutter_test/screens/posts_view.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'models/posts_data.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  Hive.registerAdapter(PostsAdapter());
+  await Hive.openBox<Posts>('posts');
   runApp(const QTest());
 }
 

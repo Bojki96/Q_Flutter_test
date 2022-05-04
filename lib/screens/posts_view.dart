@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:q_flutter_test/models/postsdata.dart';
+import 'package:q_flutter_test/models/local_posts.dart';
+import 'package:q_flutter_test/models/posts_data.dart';
 
 class PostsView extends StatefulWidget {
   const PostsView({Key? key}) : super(key: key);
@@ -40,7 +42,10 @@ class _PostsViewState extends State<PostsView> {
     post.fetchPosts().then((value) {
       setState(() {
         posts = value;
+        print('POSTS: $posts');
+        LocalPosts.save(posts: posts);
         _refreshController.refreshCompleted();
+        LocalPosts.get().then((value) => print(value[10].email));
       });
     });
   }
@@ -49,12 +54,14 @@ class _PostsViewState extends State<PostsView> {
   void dispose() {
     _refreshController.dispose();
     _postNumber = 4;
+    Hive.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
         body: SafeArea(
       child: SizedBox(

@@ -1,15 +1,18 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:html_unescape/html_unescape.dart';
 import 'package:http/http.dart' as http;
+import 'package:hive/hive.dart';
+
+part 'posts_data.g.dart';
 
 List<Posts> postsFromJson(String str) =>
     List<Posts>.from(json.decode(str).map((x) => Posts.fromJson(x)));
 
-String postsToJson(List<Posts> data) =>
-    json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+// String postsToJson(List<Posts> data) =>
+//     json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
-class Posts {
+@HiveType(typeId: 0)
+class Posts extends HiveObject {
   Posts({
     this.postId,
     this.id,
@@ -18,10 +21,15 @@ class Posts {
     this.body,
   });
 
+  @HiveField(0)
   int? postId;
+  @HiveField(1)
   int? id;
+  @HiveField(2)
   String? name;
+  @HiveField(3)
   String? email;
+  @HiveField(4)
   String? body;
 
   factory Posts.fromJson(Map<String, dynamic> json) {
@@ -45,6 +53,7 @@ class Posts {
 
   Future<List<Posts>> fetchPosts() async {
     List<Posts> posts = [];
+
     for (int i = 1; i < 5; i++) {
       final response = await http.get(
           Uri.parse('https://jsonplaceholder.typicode.com/comments?postId=$i'));
