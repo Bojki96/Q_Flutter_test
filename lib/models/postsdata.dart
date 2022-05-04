@@ -43,37 +43,42 @@ class Posts {
         "body": body,
       };
 
-  Future<List<Posts>> fetchPosts({int postNumber = 1}) async {
-    final response = await http.get(Uri.parse(
-        'https://jsonplaceholder.typicode.com/comments?postId=$postNumber'));
-
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-
-      return postsFromJson(response.body);
-    } else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      throw Exception('Failed to load posts');
+  Future<List<Posts>> fetchPosts() async {
+    List<Posts> posts = [];
+    for (int i = 1; i < 5; i++) {
+      final response = await http.get(
+          Uri.parse('https://jsonplaceholder.typicode.com/comments?postId=$i'));
+      if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        posts.addAll(postsFromJson(response.body));
+      } else {
+        // If the server did not return a 200 OK response,
+        // then throw an exception.
+        throw Exception('Failed to load posts');
+      }
     }
+    return posts;
   }
 
   Future<List<Posts>> loadNewPosts(
-      {int postNumber = 1, List<Posts>? oldPosts}) async {
-    final response = await http.get(Uri.parse(
-        'https://jsonplaceholder.typicode.com/comments?postId=$postNumber'));
+      {int postNumber = 5, List<Posts>? oldPosts}) async {
+    List<Posts> newPosts = [...oldPosts!];
 
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      List<Posts> newPosts = [...oldPosts!, ...postsFromJson(response.body)];
-      print(newPosts);
-      return newPosts;
-    } else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      throw Exception('Failed to load posts');
+    for (int i = postNumber - 2; i <= postNumber; i++) {
+      final response = await http.get(
+          Uri.parse('https://jsonplaceholder.typicode.com/comments?postId=$i'));
+      if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        newPosts.addAll(postsFromJson(response.body));
+        //return newPosts;
+      } else {
+        // If the server did not return a 200 OK response,
+        // then throw an exception.
+        throw Exception('Failed to load posts');
+      }
     }
+    return newPosts;
   }
 }

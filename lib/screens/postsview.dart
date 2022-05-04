@@ -12,11 +12,44 @@ class PostsView extends StatefulWidget {
 class _PostsViewState extends State<PostsView> {
   Posts post = Posts();
   late RefreshController _refreshController;
-  int _postNumber = 1;
+  int _postNumber = 4;
+  List<Posts> posts = [];
+
+  void _onRefresh() async {
+    _postNumber = 4;
+    await post.fetchPosts().then((value) => posts = value);
+    setState(() {
+      _refreshController.refreshCompleted();
+    });
+  }
+
+  void _onLoading() async {
+    _postNumber += 3;
+    await post
+        .loadNewPosts(postNumber: _postNumber, oldPosts: posts)
+        .then((value) => posts = value);
+    setState(() {
+      _refreshController.loadComplete();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
-    _refreshController = RefreshController(initialRefresh: false);
+    _refreshController = RefreshController(initialRefresh: true);
+    post.fetchPosts().then((value) {
+      setState(() {
+        posts = value;
+        _refreshController.refreshCompleted();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshController.dispose();
+    _postNumber = 4;
+    super.dispose();
   }
 
   @override
@@ -24,51 +57,29 @@ class _PostsViewState extends State<PostsView> {
     double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
         body: SafeArea(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: FutureBuilder(
-            future: post.fetchPosts(),
-            builder: (context, AsyncSnapshot<List<Posts>> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return SizedBox(
-                    width: screenWidth,
-                    child: Center(child: CircularProgressIndicator()));
-              } else if (snapshot.hasError) {
-                return Center(
-                    child: Text('An error occured while fetching data!'));
-              } else if (snapshot.hasData) {
-                List<Posts> posts = snapshot.data!;
-                return SizedBox(
-                  width: screenWidth,
-                  child: SmartRefresher(
-                    enablePullUp: true,
-                    enablePullDown: true,
-                    controller: _refreshController,
-                    onLoading: () => post
-                        .loadNewPosts(
-                            postNumber: _postNumber++, oldPosts: posts)
-                        .then((value) {
-                      setState(() {});
-                    }),
-                    onRefresh: () => post.fetchPosts(),
-                    child: DataTable(
-                        showBottomBorder: true,
-                        //  columnSpacing: 30,
-                        columns: const [
-                          DataColumn(label: Text('ID')),
-                          DataColumn(label: Text('PostID')),
-                          DataColumn(label: Text('Name')),
-                          DataColumn(label: Text('E-mail')),
-                          DataColumn(label: Text('Body'))
-                        ],
-                        rows: getRowData(posts: posts)),
-                  ),
-                );
-              } else {
-                return Center(
-                    child: Text('An error occured while fetching data!'));
-              }
-            }),
+      child: SizedBox(
+        width: screenWidth,
+        child: SmartRefresher(
+          enablePullUp: true,
+          enablePullDown: true,
+          controller: _refreshController,
+          onLoading: _onLoading,
+          onRefresh: _onRefresh,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+                showBottomBorder: true,
+                //  columnSpacing: 30,
+                columns: const [
+                  DataColumn(label: Text('ID')),
+                  DataColumn(label: Text('PostID')),
+                  DataColumn(label: Text('Name')),
+                  DataColumn(label: Text('E-mail')),
+                  DataColumn(label: Text('Body'))
+                ],
+                rows: getRowData(posts: posts)),
+          ),
+        ),
       ),
     ));
   }
