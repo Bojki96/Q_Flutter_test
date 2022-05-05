@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:html_unescape/html_unescape.dart';
 import 'package:http/http.dart' as http;
 import 'package:hive/hive.dart';
+import 'package:q_flutter_test/models/local_storage.dart';
 
 part 'posts_data.g.dart';
 
@@ -67,6 +68,7 @@ class Posts extends HiveObject {
         throw Exception('Failed to load posts');
       }
     }
+    LocalStorage.save(posts: posts);
     return posts;
   }
 
@@ -88,6 +90,7 @@ class Posts extends HiveObject {
         throw Exception('Failed to load posts');
       }
     }
+    LocalStorage.save(posts: newPosts);
     return newPosts;
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:q_flutter_test/screens/posts_view.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'models/posts_data.dart';
@@ -19,8 +20,10 @@ class QTest extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (Platform.isAndroid) {
-      return MaterialApp(
-        home: PostsView(),
+      return ProviderScope(
+        child: MaterialApp(
+          home: PostsView(),
+        ),
       );
     } else if (Platform.isIOS) {
       return CupertinoApp();
