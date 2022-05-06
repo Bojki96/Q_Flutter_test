@@ -1,9 +1,12 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:q_flutter_test/app_widgets/posts_widget_states.dart';
-import 'package:q_flutter_test/models/api.dart';
+import 'package:q_flutter_test/app_widgets/posts_error.dart';
+import 'package:q_flutter_test/app_widgets/posts_loaded.dart';
 import 'package:q_flutter_test/models/local_storage.dart';
 import 'package:q_flutter_test/models/posts_data.dart';
 import 'package:q_flutter_test/models/posts_state.dart';
@@ -24,41 +27,24 @@ class _PostsViewState extends ConsumerState<PostsView> {
 
   void _onRefresh() async {
     _postID = 4;
-    // await post.fetchPosts().then((value) => posts = value);
-    // setState(() {
-    //   _refreshController.refreshCompleted();
-    // });
     ref
         .read(postsNotifierProvider.notifier)
-        .refresh(refreshController: _refreshController);
-
-    //_refreshController.refreshCompleted();
+        .getPosts(refreshController: _refreshController, refresh: true);
   }
 
   void _onLoading({List<Posts>? posts}) async {
     _postID += 3;
-    // await post
-    //     .loadNewPosts(postNumber: _postNumber, oldPosts: posts)
-    //     .then((value) => posts = value);
-    // setState(() {
-    //   _refreshController.loadComplete();
-    // });
-    ref.read(postsNotifierProvider.notifier).load(
-        posts: posts, postID: _postID, refreshController: _refreshController);
+    ref.read(postsNotifierProvider.notifier).getPosts(
+        refresh: false,
+        oldPosts: posts,
+        postID: _postID,
+        refreshController: _refreshController);
   }
 
   @override
   void initState() {
     super.initState();
     _refreshController = RefreshController(initialRefresh: true);
-    // ref.read(postsNotifierProvider.notifier).refresh();
-    // post.fetchPosts().then((value) {
-    //   setState(() {
-    //     posts = value;
-    //     LocalStorage.save(posts: posts);
-    //     _refreshController.refreshCompleted();
-    //   });
-    // });
   }
 
   @override
@@ -66,6 +52,7 @@ class _PostsViewState extends ConsumerState<PostsView> {
     _refreshController.dispose();
     _postID = 4;
     Hive.close();
+
     super.dispose();
   }
 
@@ -82,23 +69,36 @@ class _PostsViewState extends ConsumerState<PostsView> {
           controller: _refreshController,
           onLoading: () => _onLoading(posts: posts),
           onRefresh: _onRefresh,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Consumer(
-              builder: (context, ref, child) {
-                final state = ref.watch(postsNotifierProvider);
-                if (state is PostsLoadingState) {
-                  return postsLoaded(posts: posts);
-                } else if (state is PostsLoadedState) {
-                  posts = state.posts;
-                  return postsLoaded(posts: state.posts);
-                } else if (state is PostsErrorState) {
-                  return postsError(width: screenWidth, error: state.error);
-                } else {
-                  return Text('NE RADI!');
-                }
-              },
-            ),
+          child: Consumer(
+            builder: (context, ref, child) {
+              final state = ref.watch(postsNotifierProvider);
+              if (state is PostsNoInternetState) {
+                return PostsError(
+                  error: state.error,
+                  isConnected: false,
+                  ref: ref,
+                );
+              } else if (state is PostsLoadingState) {
+                return PostsLoaded(posts: posts);
+              } else if (state is PostsLoadedState) {
+                posts = state.posts;
+                return PostsError(
+                  isConnected: false,
+                  error: 'An error occured, check internet connection!',
+                  ref: ref,
+                );
+                // return PostsLoaded(
+                //   posts: posts,
+                // );
+              } else if (state is PostsLocalStorage) {
+                posts = LocalStorage.get();
+                print(posts);
+                return PostsLoaded(posts: posts);
+              } else {
+                return PostsError(
+                    error: (state as PostsErrorState).error, isConnected: true);
+              }
+            },
           ),
         ),
       ),

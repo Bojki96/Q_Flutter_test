@@ -1,4 +1,5 @@
 import 'package:http/http.dart' as http;
+import 'package:q_flutter_test/models/local_storage.dart';
 import 'package:q_flutter_test/models/posts_data.dart';
 
 class ApiResponse<T> {
@@ -28,6 +29,7 @@ class ApiService {
         );
       }
     }
+    LocalStorage.save(posts: posts);
     return ApiResponse(data: posts);
   }
 
@@ -46,6 +48,7 @@ class ApiService {
         );
       }
     }
+    LocalStorage.save(posts: posts);
     return ApiResponse(data: posts);
   }
 }
@@ -58,7 +61,7 @@ class ApiRepository {
   }
 
   Future<ApiResponse<List<Posts>>> fetchNewPosts(
-      {List<Posts>? posts, int? postID}) {
-    return _provider.fetchNewPosts(oldPosts: posts, postID: postID!);
+      {List<Posts>? oldPosts, int? postID}) {
+    return _provider.fetchNewPosts(oldPosts: oldPosts, postID: postID!);
   }
 }

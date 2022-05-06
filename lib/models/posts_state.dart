@@ -26,4 +26,10 @@ class PostsErrorState extends PostsState {
   const PostsErrorState(this.error);
 }
 
-class PostsNoInternetState extends PostsState {}
+class PostsNoInternetState extends PostsState {
+  final String error;
+
+  const PostsNoInternetState(this.error);
+}
+
+class PostsLocalStorage extends PostsState {}
