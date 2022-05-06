@@ -54,6 +54,8 @@ class PostsNotifier extends StateNotifier<PostsState> {
     }
   }
 
+  void wentOffline() => state = PostsLocalStorage();
+  void backOnline() => state = PostsLoadingState();
   // void load(
   //     {List<Posts>? oldPosts,
   //     int? postID,

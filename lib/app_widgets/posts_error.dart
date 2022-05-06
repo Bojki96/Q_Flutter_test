@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:q_flutter_test/models/local_storage.dart';
 import 'package:q_flutter_test/models/state_provider.dart';
+
+import '../models/posts_data.dart';
 
 class PostsError extends StatelessWidget {
   PostsError(
@@ -32,9 +36,17 @@ class PostsError extends StatelessWidget {
         ),
         ElevatedButton(
             onPressed: () {
-              ref!
-                  .read(postsNotifierProvider.notifier)
-                  .getPosts(offlineUse: true);
+              if (LocalStorage.boxIsEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(
+                  'There are no data saved yet!',
+                  style: TextStyle(color: Colors.red[700]),
+                )));
+              } else {
+                ref!
+                    .read(postsNotifierProvider.notifier)
+                    .getPosts(offlineUse: true);
+              }
             },
             child: Text('Use offline'))
       ],

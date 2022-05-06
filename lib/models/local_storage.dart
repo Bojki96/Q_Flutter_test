@@ -10,7 +10,7 @@ class LocalStorage {
     for (int i = 0; i < posts!.length; i++) {
       await LocalStorage.getLocalPostBox.put(posts[i].id, posts[i]);
     }
-    // Hive.close();
+    Hive.close();
   }
 
   static List<Posts> get() {
@@ -22,4 +22,6 @@ class LocalStorage {
     //Hive.close();
     return posts;
   }
+
+  static bool get boxIsEmpty => getLocalPostBox.isEmpty;
 }

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,11 +18,101 @@ class PostsView extends ConsumerStatefulWidget {
   ConsumerState<PostsView> createState() => _PostsViewState();
 }
 
-class _PostsViewState extends ConsumerState<PostsView> {
+class _PostsViewState extends ConsumerState<PostsView>
+    with WidgetsBindingObserver {
   Posts post = Posts();
   late RefreshController _refreshController;
   int _postID = 4;
   List<Posts> posts = [];
+  StreamSubscription<ConnectivityResult>? subscription;
+  bool hideInitialConnection = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance!.addObserver(this);
+    _refreshController = RefreshController(initialRefresh: true);
+    subscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      if (!hideInitialConnection) {
+        if (result != ConnectivityResult.none) {
+          online();
+        } else {
+          offline();
+        }
+      }
+      hideInitialConnection = false;
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.detached) {
+      await Hive.close();
+    } else if (state == AppLifecycleState.resumed) {
+      hideInitialConnection = true;
+      // await Hive.openBox<Posts>('posts');
+    } else if (state == AppLifecycleState.paused) {
+      await Hive.close();
+    }
+  }
+
+  @override
+  void dispose() {
+    _refreshController.dispose();
+    _postID = 4;
+    Hive.close();
+    subscription!.cancel();
+    WidgetsBinding.instance!.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    return Scaffold(
+        body: SafeArea(
+      child: SizedBox(
+        width: screenWidth,
+        child: SmartRefresher(
+          enablePullUp:
+              (ref.watch(postsNotifierProvider) is! PostsLocalStorage),
+          enablePullDown:
+              (ref.watch(postsNotifierProvider) is! PostsLocalStorage),
+          controller: _refreshController,
+          onLoading: () => _onLoading(posts: posts),
+          onRefresh: _onRefresh,
+          child: Consumer(
+            builder: (context, ref, child) {
+              final state = ref.watch(postsNotifierProvider);
+              if (state is PostsNoInternetState) {
+                return PostsError(
+                  error: state.error,
+                  isConnected: false,
+                  ref: ref,
+                );
+              } else if (state is PostsLoadingState) {
+                return PostsLoaded(posts: posts);
+              } else if (state is PostsLoadedState) {
+                posts = state.posts;
+                return PostsLoaded(
+                  posts: posts,
+                );
+              } else if (state is PostsLocalStorage) {
+                posts = LocalStorage.get();
+                return PostsLoaded(posts: posts);
+              } else {
+                return PostsError(
+                    error: (state as PostsErrorState).error, isConnected: true);
+              }
+            },
+          ),
+        ),
+      ),
+    ));
+  }
 
   void _onRefresh() async {
     _postID = 4;
@@ -41,67 +130,18 @@ class _PostsViewState extends ConsumerState<PostsView> {
         refreshController: _refreshController);
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _refreshController = RefreshController(initialRefresh: true);
+  void offline() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+      "You are offline!",
+      style: TextStyle(color: Colors.red[700]),
+    )));
+    ref.read(postsNotifierProvider.notifier).wentOffline();
   }
 
-  @override
-  void dispose() {
-    _refreshController.dispose();
-    _postID = 4;
-    Hive.close();
-
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    return Scaffold(
-        body: SafeArea(
-      child: SizedBox(
-        width: screenWidth,
-        child: SmartRefresher(
-          enablePullUp: true,
-          enablePullDown: true,
-          controller: _refreshController,
-          onLoading: () => _onLoading(posts: posts),
-          onRefresh: _onRefresh,
-          child: Consumer(
-            builder: (context, ref, child) {
-              final state = ref.watch(postsNotifierProvider);
-              if (state is PostsNoInternetState) {
-                return PostsError(
-                  error: state.error,
-                  isConnected: false,
-                  ref: ref,
-                );
-              } else if (state is PostsLoadingState) {
-                return PostsLoaded(posts: posts);
-              } else if (state is PostsLoadedState) {
-                posts = state.posts;
-                return PostsError(
-                  isConnected: false,
-                  error: 'An error occured, check internet connection!',
-                  ref: ref,
-                );
-                // return PostsLoaded(
-                //   posts: posts,
-                // );
-              } else if (state is PostsLocalStorage) {
-                posts = LocalStorage.get();
-                print(posts);
-                return PostsLoaded(posts: posts);
-              } else {
-                return PostsError(
-                    error: (state as PostsErrorState).error, isConnected: true);
-              }
-            },
-          ),
-        ),
-      ),
-    ));
+  void online() {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("You are back online!")));
+    ref.read(postsNotifierProvider.notifier).backOnline();
   }
 }
