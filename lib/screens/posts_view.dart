@@ -26,6 +26,7 @@ class _PostsViewState extends ConsumerState<PostsView>
   List<Posts> posts = [];
   StreamSubscription<ConnectivityResult>? subscription;
   bool hideInitialConnection = true;
+  bool wentOffline = false;
 
   @override
   void initState() {
@@ -50,12 +51,12 @@ class _PostsViewState extends ConsumerState<PostsView>
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.detached) {
-      await Hive.close();
+      // await Hive.close();
     } else if (state == AppLifecycleState.resumed) {
       hideInitialConnection = true;
       // await Hive.openBox<Posts>('posts');
     } else if (state == AppLifecycleState.paused) {
-      await Hive.close();
+      // await Hive.close();
     }
   }
 
@@ -73,45 +74,56 @@ class _PostsViewState extends ConsumerState<PostsView>
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-        body: SafeArea(
-      child: SizedBox(
-        width: screenWidth,
-        child: SmartRefresher(
-          enablePullUp:
-              (ref.watch(postsNotifierProvider) is! PostsLocalStorage),
-          enablePullDown:
-              (ref.watch(postsNotifierProvider) is! PostsLocalStorage),
-          controller: _refreshController,
-          onLoading: () => _onLoading(posts: posts),
-          onRefresh: _onRefresh,
-          child: Consumer(
-            builder: (context, ref, child) {
-              final state = ref.watch(postsNotifierProvider);
-              if (state is PostsNoInternetState) {
-                return PostsError(
-                  error: state.error,
-                  isConnected: false,
-                  ref: ref,
-                );
-              } else if (state is PostsLoadingState) {
-                return PostsLoaded(posts: posts);
-              } else if (state is PostsLoadedState) {
-                posts = state.posts;
-                return PostsLoaded(
-                  posts: posts,
-                );
-              } else if (state is PostsLocalStorage) {
-                posts = LocalStorage.get();
-                return PostsLoaded(posts: posts);
-              } else {
-                return PostsError(
-                    error: (state as PostsErrorState).error, isConnected: true);
-              }
-            },
-          ),
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: const Color.fromARGB(255, 79, 255, 0),
+          title: const Center(
+              child: Text(
+            'Q Test',
+            style: TextStyle(color: Colors.black),
+          )),
+          elevation: 0,
         ),
-      ),
-    ));
+        body: SafeArea(
+          child: SizedBox(
+            width: screenWidth,
+            child: SmartRefresher(
+              enablePullUp:
+                  (ref.watch(postsNotifierProvider) is! PostsLocalStorage),
+              enablePullDown:
+                  (ref.watch(postsNotifierProvider) is! PostsLocalStorage),
+              controller: _refreshController,
+              onLoading: () => _onLoading(posts: posts),
+              onRefresh: _onRefresh,
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final state = ref.watch(postsNotifierProvider);
+                  if (state is PostsNoInternetState) {
+                    return PostsError(
+                      error: state.error,
+                      isConnected: false,
+                      ref: ref,
+                    );
+                  } else if (state is PostsLoadingState) {
+                    return PostsLoaded(posts: posts);
+                  } else if (state is PostsLoadedState) {
+                    posts = state.posts;
+                    return PostsLoaded(
+                      posts: posts,
+                    );
+                  } else if (state is PostsLocalStorage) {
+                    posts = LocalStorage.get();
+                    return PostsLoaded(posts: posts);
+                  } else {
+                    return PostsError(
+                        error: (state as PostsErrorState).error,
+                        isConnected: true);
+                  }
+                },
+              ),
+            ),
+          ),
+        ));
   }
 
   void _onRefresh() async {
@@ -119,29 +131,39 @@ class _PostsViewState extends ConsumerState<PostsView>
     ref
         .read(postsNotifierProvider.notifier)
         .getPosts(refreshController: _refreshController, refresh: true);
+    wentOffline = false;
   }
 
   void _onLoading({List<Posts>? posts}) async {
+    wentOffline ? _postID = LocalStorage.getLastPost.id! : _postID = _postID;
     _postID += 3;
     ref.read(postsNotifierProvider.notifier).getPosts(
         refresh: false,
         oldPosts: posts,
         postID: _postID,
         refreshController: _refreshController);
+    wentOffline = false;
   }
 
   void offline() {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-      "You are offline!",
-      style: TextStyle(color: Colors.red[700]),
-    )));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text(
+        "You are offline!",
+        style: TextStyle(color: Colors.black),
+      ),
+      backgroundColor: Colors.red,
+    ));
     ref.read(postsNotifierProvider.notifier).wentOffline();
+    wentOffline = true;
   }
 
   void online() {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("You are back online!")));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text(
+        "You are back online!",
+      ),
+      backgroundColor: Color.fromARGB(255, 79, 255, 0),
+    ));
     ref.read(postsNotifierProvider.notifier).backOnline();
   }
 }
