@@ -13,11 +13,11 @@ class PostsLoaded extends StatelessWidget {
             //showBottomBorder: false,
             columnSpacing: 30,
             dataRowHeight: 60,
-            border: TableBorder(
+            border: const TableBorder(
                 verticalInside: BorderSide(
                     width: 0.5, color: Color.fromARGB(255, 79, 255, 0))),
             headingRowColor: MaterialStateProperty.all<Color>(
-                Color.fromARGB(255, 79, 255, 0)),
+                const Color.fromARGB(255, 79, 255, 0)),
             // headingTextStyle: TextStyle(
             //     color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
             columns: const [
@@ -32,8 +32,9 @@ class PostsLoaded extends StatelessWidget {
 
   List<DataRow> getRowData({@required List<Posts>? posts}) {
     List<DataRow> rowContent = [];
-    posts!.forEach(
-        (post) => rowContent.add(DataRow(cells: getCellData(post: post))));
+    for (var post in posts!) {
+      rowContent.add(DataRow(cells: getCellData(post: post)));
+    }
     return rowContent;
   }
 
@@ -108,7 +109,7 @@ class CellContent extends StatelessWidget {
             )),
             padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
                 const EdgeInsets.all(8)),
-            maximumSize: MaterialStateProperty.all<Size>(Size(200, 100))
+            maximumSize: MaterialStateProperty.all<Size>(const Size(200, 100))
             // elevation: MaterialStateProperty.all<double>(10),
             // shadowColor:
             //     MaterialStateProperty.all<Color>(Color.fromARGB(255, 79, 255, 0)),

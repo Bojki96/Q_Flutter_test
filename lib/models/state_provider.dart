@@ -1,8 +1,7 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:q_flutter_test/models/connection.dart';
+import 'package:q_flutter_test/models/local_storage.dart';
 import 'package:q_flutter_test/models/posts_data.dart';
 import 'api.dart';
 import 'posts_state.dart';
@@ -16,7 +15,7 @@ final postsNotifierProvider = StateNotifierProvider<PostsNotifier, PostsState>(
 class PostsNotifier extends StateNotifier<PostsState> {
   final ApiRepository _apiRepository;
 
-  PostsNotifier(this._apiRepository) : super(PostsLoadingState());
+  PostsNotifier(this._apiRepository) : super(PostsInitialState());
 
   void getPosts({
     RefreshController? refreshController,
@@ -24,11 +23,13 @@ class PostsNotifier extends StateNotifier<PostsState> {
     List<Posts>? oldPosts,
     int? postID,
     bool offlineUse = false,
+    bool initialRefresh = false,
   }) async {
     ApiResponse<List<Posts>> posts;
     if (await Network.statusOnline()) {
-      state = PostsLoadingState();
+      // state = PostsLoadingState();
       if (refresh!) {
+        if (initialRefresh) state = PostsInitialState();
         posts = await _apiRepository.fetchPosts();
         refreshController!.refreshCompleted();
       } else {
@@ -43,7 +44,7 @@ class PostsNotifier extends StateNotifier<PostsState> {
       }
     } else {
       if (offlineUse) {
-        state = PostsLocalStorage();
+        wentOffline();
       } else {
         state = const PostsNoInternetState(
             'An error occured, check internet connection!');
@@ -54,8 +55,23 @@ class PostsNotifier extends StateNotifier<PostsState> {
     }
   }
 
-  void wentOffline() => state = PostsLocalStorage();
-  void backOnline() => state = PostsLoadingState();
+  void wentOffline() async {
+    state = PostsInitialState();
+
+    List<Posts> posts = LocalStorage.getInitial();
+    await Future.delayed(Duration(seconds: 1));
+    state = PostsLocalStorage(posts);
+  }
+
+  void loadMoreOffinePosts(
+      {required List<Posts> oldPosts,
+      required RefreshController refreshController}) async {
+    List<Posts> posts = await LocalStorage.loadMorePosts(
+        oldPosts: oldPosts, refreshController: refreshController);
+    state = PostsLocalStorage(posts);
+  }
+
+  void backOnline(List<Posts> posts) => state = PostsLoadedState(posts);
   // void load(
   //     {List<Posts>? oldPosts,
   //     int? postID,

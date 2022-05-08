@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:q_flutter_test/models/local_storage.dart';
 import 'package:q_flutter_test/models/state_provider.dart';
 
-import '../models/posts_data.dart';
-
 class PostsError extends StatelessWidget {
-  PostsError(
-      {Key? key, @required this.error, @required this.isConnected, this.ref})
-      : super(key: key);
+  const PostsError({
+    Key? key,
+    @required this.error,
+    @required this.isConnected,
+    this.ref,
+  }) : super(key: key);
   final String? error;
   final bool? isConnected;
-  WidgetRef? ref;
+  final WidgetRef? ref;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -31,8 +32,11 @@ class PostsError extends StatelessWidget {
         ),
         Text(
           error!,
-          style: TextStyle(fontSize: 23),
+          style: const TextStyle(fontSize: 23),
           textAlign: TextAlign.center,
+        ),
+        const SizedBox(
+          height: 10,
         ),
         ElevatedButton(
             onPressed: () {
@@ -43,12 +47,10 @@ class PostsError extends StatelessWidget {
                   style: TextStyle(color: Colors.red[700]),
                 )));
               } else {
-                ref!
-                    .read(postsNotifierProvider.notifier)
-                    .getPosts(offlineUse: true);
+                ref!.read(postsNotifierProvider.notifier).wentOffline();
               }
             },
-            child: Text('Use offline'))
+            child: const Text('Use offline')),
       ],
     );
   }

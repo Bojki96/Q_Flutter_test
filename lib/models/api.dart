@@ -17,7 +17,7 @@ class ApiResponse<T> {
 class ApiService {
   Future<ApiResponse<List<Posts>>> fetchPosts() async {
     List<Posts> posts = [];
-    for (int i = 1; i < 5; i++) {
+    for (int i = 1; i < 6; i++) {
       try {
         final response = await http.get(Uri.parse(
             'https://jsonplaceholder.typicode.com/comments?postId=$i'));

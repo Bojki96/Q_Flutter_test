@@ -6,7 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:q_flutter_test/app_widgets/posts_error.dart';
 import 'package:q_flutter_test/app_widgets/posts_loaded.dart';
-import 'package:q_flutter_test/models/local_storage.dart';
+import 'package:q_flutter_test/app_widgets/posts_loading.dart';
 import 'package:q_flutter_test/models/posts_data.dart';
 import 'package:q_flutter_test/models/posts_state.dart';
 import 'package:q_flutter_test/models/state_provider.dart';
@@ -22,29 +22,36 @@ class _PostsViewState extends ConsumerState<PostsView>
     with WidgetsBindingObserver {
   Posts post = Posts();
   late RefreshController _refreshController;
-  int _postID = 4;
+  int _postID = 5;
   List<Posts> posts = [];
   StreamSubscription<ConnectivityResult>? subscription;
   bool hideInitialConnection = true;
   bool wentOffline = false;
+  bool initialRefresh = true;
+  bool initialOffline = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
-    _refreshController = RefreshController(initialRefresh: true);
+    _refreshController = RefreshController();
     subscription = Connectivity()
         .onConnectivityChanged
-        .listen((ConnectivityResult result) {
+        .listen((ConnectivityResult result) async {
       if (!hideInitialConnection) {
         if (result != ConnectivityResult.none) {
-          online();
+          if (initialOffline) {
+            await _refreshController.requestRefresh();
+            initialOffline = false;
+          } else {
+            online(posts);
+          }
         } else {
           offline();
         }
       }
-      hideInitialConnection = false;
     });
+    _onRefresh();
   }
 
   @override
@@ -63,7 +70,7 @@ class _PostsViewState extends ConsumerState<PostsView>
   @override
   void dispose() {
     _refreshController.dispose();
-    _postID = 4;
+    _postID = 5;
     Hive.close();
     subscription!.cancel();
     WidgetsBinding.instance!.removeObserver(this);
@@ -88,33 +95,40 @@ class _PostsViewState extends ConsumerState<PostsView>
           child: SizedBox(
             width: screenWidth,
             child: SmartRefresher(
-              enablePullUp:
-                  (ref.watch(postsNotifierProvider) is! PostsLocalStorage),
-              enablePullDown:
-                  (ref.watch(postsNotifierProvider) is! PostsLocalStorage),
+              enablePullUp: !wentOffline &&
+                  (ref.watch(postsNotifierProvider) is! PostsNoInternetState),
+              enablePullDown: !wentOffline,
               controller: _refreshController,
-              onLoading: () => _onLoading(posts: posts),
+              onLoading: () => _onLoading(
+                  posts: posts,
+                  offlineUse:
+                      ref.watch(postsNotifierProvider) is PostsLocalStorage),
               onRefresh: _onRefresh,
               child: Consumer(
                 builder: (context, ref, child) {
                   final state = ref.watch(postsNotifierProvider);
-                  if (state is PostsNoInternetState) {
+                  if (state is PostsInitialState) {
+                    return const PostsLoading();
+                  } else if (state is PostsNoInternetState) {
+                    hideInitialConnection = false;
+                    initialOffline = true;
                     return PostsError(
                       error: state.error,
                       isConnected: false,
                       ref: ref,
                     );
-                  } else if (state is PostsLoadingState) {
-                    return PostsLoaded(posts: posts);
                   } else if (state is PostsLoadedState) {
                     posts = state.posts;
+                    hideInitialConnection = false;
                     return PostsLoaded(
                       posts: posts,
                     );
                   } else if (state is PostsLocalStorage) {
-                    posts = LocalStorage.get();
+                    posts = state.posts;
+                    hideInitialConnection = false;
                     return PostsLoaded(posts: posts);
                   } else {
+                    hideInitialConnection = false;
                     return PostsError(
                         error: (state as PostsErrorState).error,
                         isConnected: true);
@@ -127,43 +141,53 @@ class _PostsViewState extends ConsumerState<PostsView>
   }
 
   void _onRefresh() async {
-    _postID = 4;
-    ref
-        .read(postsNotifierProvider.notifier)
-        .getPosts(refreshController: _refreshController, refresh: true);
-    wentOffline = false;
-  }
-
-  void _onLoading({List<Posts>? posts}) async {
-    wentOffline ? _postID = LocalStorage.getLastPost.id! : _postID = _postID;
-    _postID += 3;
     ref.read(postsNotifierProvider.notifier).getPosts(
-        refresh: false,
-        oldPosts: posts,
-        postID: _postID,
-        refreshController: _refreshController);
-    wentOffline = false;
+        refreshController: _refreshController,
+        refresh: true,
+        initialRefresh: initialRefresh);
+    initialRefresh = false;
+    _postID = 5;
   }
 
-  void offline() {
+  void _onLoading({List<Posts>? posts, bool offlineUse = false}) async {
+    _postID += 3;
+    if (!offlineUse) {
+      ref.read(postsNotifierProvider.notifier).getPosts(
+          refresh: false,
+          oldPosts: posts,
+          postID: _postID,
+          refreshController: _refreshController);
+    } else {
+      ref.read(postsNotifierProvider.notifier).loadMoreOffinePosts(
+          oldPosts: posts!, refreshController: _refreshController);
+    }
+  }
+
+  void offline() async {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text(
-        "You are offline!",
+        "Lost internet connection!",
         style: TextStyle(color: Colors.black),
       ),
       backgroundColor: Colors.red,
     ));
-    ref.read(postsNotifierProvider.notifier).wentOffline();
-    wentOffline = true;
+    setState(() {
+      wentOffline = true;
+    });
+    hideInitialConnection = false;
   }
 
-  void online() {
+  void online(List<Posts> posts) {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text(
         "You are back online!",
       ),
       backgroundColor: Color.fromARGB(255, 79, 255, 0),
     ));
-    ref.read(postsNotifierProvider.notifier).backOnline();
+    ref.read(postsNotifierProvider.notifier).backOnline(posts);
+    setState(() {
+      wentOffline = false;
+    });
+    hideInitialConnection = false;
   }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'posts_data.dart';
 
 @immutable
@@ -12,7 +11,7 @@ abstract class PostsState {
 
 class PostsInitialState extends PostsState {}
 
-class PostsLoadingState extends PostsState {}
+//class PostsLoadingState extends PostsState {}
 
 class PostsLoadedState extends PostsState {
   final List<Posts> posts;
@@ -32,4 +31,7 @@ class PostsNoInternetState extends PostsState {
   const PostsNoInternetState(this.error);
 }
 
-class PostsLocalStorage extends PostsState {}
+class PostsLocalStorage extends PostsState {
+  final List<Posts> posts;
+  const PostsLocalStorage(this.posts);
+}
