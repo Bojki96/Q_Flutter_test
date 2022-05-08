@@ -126,11 +126,11 @@ class CellContent extends StatelessWidget {
           return BasicDialogAlert(
               title: Text(
                 title!,
-                style: TextStyle(color: Colors.black),
+                style: const TextStyle(color: Colors.black),
               ),
               content: Text(
                 content!,
-                style: TextStyle(color: Colors.black),
+                style: const TextStyle(color: Colors.black),
               ),
               actions: <Widget>[
                 BasicDialogAction(

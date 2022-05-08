@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class PostsLoading extends StatelessWidget {
@@ -5,8 +7,11 @@ class PostsLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.expand(
-      child: Center(child: CircularProgressIndicator()),
+    return SizedBox.expand(
+      child: Center(
+          child: Platform.isAndroid
+              ? const CircularProgressIndicator()
+              : const CupertinoActivityIndicator()),
     );
   }
 }

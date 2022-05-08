@@ -42,6 +42,7 @@ class _PostsViewState extends ConsumerState<PostsView>
         if (result != ConnectivityResult.none) {
           if (initialOffline) {
             await _refreshController.requestRefresh();
+            _refreshController.resetNoData();
             initialOffline = false;
           } else {
             online(posts);
@@ -60,7 +61,7 @@ class _PostsViewState extends ConsumerState<PostsView>
     if (state == AppLifecycleState.detached) {
       // await Hive.close();
     } else if (state == AppLifecycleState.resumed) {
-      hideInitialConnection = true;
+      //hideInitialConnection = true;
       // await Hive.openBox<Posts>('posts');
     } else if (state == AppLifecycleState.paused) {
       // await Hive.close();
@@ -120,6 +121,7 @@ class _PostsViewState extends ConsumerState<PostsView>
                   } else if (state is PostsLoadedState) {
                     posts = state.posts;
                     hideInitialConnection = false;
+
                     return PostsLoaded(
                       posts: posts,
                     );
