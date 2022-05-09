@@ -54,12 +54,16 @@ class NonExistingPlatform extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.all(0),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.red,
+      child: Center(
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.red,
+          ),
+          child: const Text(
+            'This is not a valid platform for running the application!',
+            textAlign: TextAlign.center,
+          ),
         ),
-        child: const Text(
-            'This is not a valid platform for running the application!'),
       ),
     );
   }

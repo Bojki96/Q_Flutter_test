@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:html_unescape/html_unescape.dart';
 import 'package:hive/hive.dart';
-
 part 'posts_data.g.dart';
 
 List<Posts> postsFromJson(String str) =>
