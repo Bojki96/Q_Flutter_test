@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:q_flutter_test/models/theme_provider.dart';
 import 'package:q_flutter_test/screens/posts_view.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'models/posts_data.dart';
@@ -22,29 +23,26 @@ class QTest extends StatelessWidget {
     if (Platform.isAndroid) {
       return ProviderScope(
         child: MaterialApp(
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSwatch().copyWith(
-              primary: const Color.fromARGB(255, 79, 255, 0),
-            ),
-            primaryColor: const Color.fromARGB(255, 79, 255, 0),
-            textTheme: Theme.of(context)
-                .textTheme
-                .apply(bodyColor: Colors.white, fontSizeDelta: 5),
-          ),
+          themeMode: ThemeMode.dark,
+          theme: CustomThemeMode.lightAndroid(context),
+          darkTheme: CustomThemeMode.darkAndroid(context),
           home: const PostsView(),
         ),
       );
     } else if (Platform.isIOS) {
-      return CupertinoApp(
-        theme: CupertinoThemeData(
-            primaryColor: const Color.fromARGB(255, 79, 255, 0),
-            textTheme: CupertinoTheme.of(context)
-                .textTheme
-                .copyWith(primaryColor: Colors.white)),
-        home: const PostsView(),
+      return ProviderScope(
+        child: CupertinoApp(
+          theme: CupertinoThemeData(
+              scaffoldBackgroundColor: CupertinoColors.black,
+              primaryColor: const Color.fromARGB(255, 79, 255, 0),
+              textTheme: CupertinoTheme.of(context).textTheme.copyWith(
+                  primaryColor: Colors.white,
+                  textStyle: const TextStyle(color: CupertinoColors.white))),
+          home: const PostsView(),
+        ),
       );
     } else {
-      return NonExistingPlatform();
+      return const NonExistingPlatform();
     }
   }
 }
@@ -55,13 +53,13 @@ class NonExistingPlatform extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.all(0),
+      margin: const EdgeInsets.all(0),
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.red,
         ),
-        child:
-            Text('This is not a valid platform for running the application!'),
+        child: const Text(
+            'This is not a valid platform for running the application!'),
       ),
     );
   }

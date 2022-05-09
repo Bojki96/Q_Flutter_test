@@ -11,7 +11,9 @@ class PostsLoading extends StatelessWidget {
       child: Center(
           child: Platform.isAndroid
               ? const CircularProgressIndicator()
-              : const CupertinoActivityIndicator()),
+              : const CupertinoActivityIndicator(
+                  color: Color.fromARGB(255, 79, 255, 0),
+                )),
     );
   }
 }

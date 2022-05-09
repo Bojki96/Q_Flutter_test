@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:q_flutter_test/models/local_storage.dart';
@@ -36,22 +38,32 @@ class PostsError extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(
-          height: 10,
+          height: 15,
         ),
-        ElevatedButton(
-            onPressed: () {
-              if (LocalStorage.boxIsEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(
-                  'There are no data saved yet!',
-                  style: TextStyle(color: Colors.red[700]),
-                )));
-              } else {
-                ref!.read(postsNotifierProvider.notifier).wentOffline();
-              }
-            },
-            child: const Text('Use offline')),
+        Platform.isAndroid
+            ? ElevatedButton(
+                onPressed: () {
+                  loadOfflineData(context);
+                },
+                child: const Text('Use offline'))
+            : CupertinoButton.filled(
+                child: const Text('Use offline'),
+                onPressed: () {
+                  loadOfflineData(context);
+                }),
       ],
     );
+  }
+
+  void loadOfflineData(context) {
+    if (LocalStorage.boxIsEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+        'There are no data saved yet!',
+        style: TextStyle(color: Colors.red[700]),
+      )));
+    } else {
+      ref!.read(postsNotifierProvider.notifier).wentOffline();
+    }
   }
 }

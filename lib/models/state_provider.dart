@@ -27,7 +27,6 @@ class PostsNotifier extends StateNotifier<PostsState> {
   }) async {
     ApiResponse<List<Posts>> posts;
     if (await Network.statusOnline()) {
-      // state = PostsLoadingState();
       if (refresh!) {
         if (initialRefresh) state = PostsInitialState();
         posts = await _apiRepository.fetchPosts();
@@ -57,9 +56,8 @@ class PostsNotifier extends StateNotifier<PostsState> {
 
   void wentOffline() async {
     state = PostsInitialState();
-
     List<Posts> posts = LocalStorage.getInitial();
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 1));
     state = PostsLocalStorage(posts);
   }
 
@@ -72,23 +70,4 @@ class PostsNotifier extends StateNotifier<PostsState> {
   }
 
   void backOnline(List<Posts> posts) => state = PostsLoadedState(posts);
-  // void load(
-  //     {List<Posts>? oldPosts,
-  //     int? postID,
-  //     RefreshController? refreshController}) async {
-  //   if (await Network.checkConnection()) {
-  //     state = PostsLoadedState(oldPosts!);
-  //     final newPosts = await _apiRepository.fetchNewPosts(
-  //         oldPosts: oldPosts, postID: postID);
-  //     refreshController!.loadComplete();
-  //     if (newPosts.success) {
-  //       state = PostsLoadedState(newPosts.data!);
-  //     } else {
-  //       state = PostsErrorState(newPosts.error!);
-  //     }
-  //   } else {
-  //     state =
-  //         const PostsErrorState('An error occured, check internet connection!');
-  //   }
-  // }
 }

@@ -32,6 +32,7 @@ class LocalStorage {
       if (i < LocalStorage.getLocalPostBox.length - 1) {
         posts.add(LocalStorage.getLocalPostBox.getAt(i)!);
       } else {
+        await Future.delayed(const Duration(seconds: 1));
         refreshController!.loadNoData();
         return posts;
       }

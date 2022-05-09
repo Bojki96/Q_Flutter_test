@@ -1,6 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../models/posts_data.dart';
-import 'package:flutter_dialogs/flutter_dialogs.dart';
 
 class PostsLoaded extends StatelessWidget {
   const PostsLoaded({Key? key, @required this.posts}) : super(key: key);
@@ -10,16 +11,19 @@ class PostsLoaded extends StatelessWidget {
     return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(
-            //showBottomBorder: false,
-            columnSpacing: 30,
+            showBottomBorder: true,
+            columnSpacing: 40,
             dataRowHeight: 60,
             border: const TableBorder(
+                left: BorderSide(
+                    width: 0.5, color: Color.fromARGB(255, 79, 255, 0)),
+                right: BorderSide(
+                    width: 0.5, color: Color.fromARGB(255, 79, 255, 0)),
                 verticalInside: BorderSide(
                     width: 0.5, color: Color.fromARGB(255, 79, 255, 0))),
             headingRowColor: MaterialStateProperty.all<Color>(
                 const Color.fromARGB(255, 79, 255, 0)),
-            // headingTextStyle: TextStyle(
-            //     color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
+            dividerThickness: 0.0,
             columns: const [
               DataColumn(label: Text('ID')),
               DataColumn(label: Text('PostID')),
@@ -80,23 +84,23 @@ class CellContent extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextButton(
-        child: SingleChildScrollView(
-          child: Text(
-            content!,
-            // style: TextStyle(color: Colors.white),
-          ),
+        child: Text(
+          content!,
+          style: const TextStyle(color: Colors.white),
+          overflow: TextOverflow.fade,
         ),
         onPressed: () {
           showCellContent(context: context, title: title, content: content);
         },
         style: ButtonStyle(
-            textStyle: MaterialStateProperty.all<TextStyle>(const TextStyle(
-              color: Colors.white,
+            textStyle: MaterialStateProperty.all<TextStyle>(TextStyle(
+              color: Theme.of(context).colorScheme.primary,
             )),
             backgroundColor: MaterialStateProperty.all<Color>(
               Colors.transparent,
             ),
-            foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+            foregroundColor: MaterialStateProperty.all<Color>(
+                Theme.of(context).colorScheme.primary),
             overlayColor: MaterialStateProperty.all<Color>(
               const Color.fromARGB(255, 79, 255, 0),
             ),
@@ -120,10 +124,10 @@ class CellContent extends StatelessWidget {
 
   Future showCellContent(
       {BuildContext? context, String? title, String? content}) {
-    return showDialog(
-        context: context!,
-        builder: (context) {
-          return BasicDialogAlert(
+    return Platform.isAndroid
+        ? showDialog(
+            context: context!,
+            builder: (context) => AlertDialog(
               title: Text(
                 title!,
                 style: const TextStyle(color: Colors.black),
@@ -132,17 +136,28 @@ class CellContent extends StatelessWidget {
                 content!,
                 style: const TextStyle(color: Colors.black),
               ),
-              actions: <Widget>[
-                BasicDialogAction(
-                  title: const Text(
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
                     'OK',
                     style: TextStyle(color: Colors.lightBlue),
                   ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
                 )
-              ]);
-        });
+              ],
+            ),
+          )
+        : showCupertinoDialog(
+            context: context!,
+            builder: (context) => CupertinoAlertDialog(
+                  title: Text(title!),
+                  content: SingleChildScrollView(child: Text(content!)),
+                  actions: [
+                    CupertinoDialogAction(
+                      child: const Text('OK'),
+                      onPressed: () => Navigator.pop(context),
+                    )
+                  ],
+                ));
   }
 }
