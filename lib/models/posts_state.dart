@@ -4,14 +4,9 @@ import 'posts_data.dart';
 @immutable
 abstract class PostsState {
   const PostsState();
-
-  // @override
-  // List<Object> get props => [];
 }
 
 class PostsInitialState extends PostsState {}
-
-//class PostsLoadingState extends PostsState {}
 
 class PostsLoadedState extends PostsState {
   final List<Posts> posts;

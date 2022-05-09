@@ -113,11 +113,7 @@ class CellContent extends StatelessWidget {
             )),
             padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
                 const EdgeInsets.all(8)),
-            maximumSize: MaterialStateProperty.all<Size>(const Size(200, 100))
-            // elevation: MaterialStateProperty.all<double>(10),
-            // shadowColor:
-            //     MaterialStateProperty.all<Color>(Color.fromARGB(255, 79, 255, 0)),
-            ),
+            maximumSize: MaterialStateProperty.all<Size>(const Size(200, 100))),
       ),
     );
   }
